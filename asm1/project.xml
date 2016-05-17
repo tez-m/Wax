@@ -1,0 +1,52 @@
+<project>
+    <pomVersion>3</pomVersion>
+
+    <artifactId>asm-toolkit</artifactId>
+    <name>Java bytecode manipulation with ASM toolkit</name>
+    <groupId>articles</groupId>
+    <currentVersion>1.0</currentVersion>
+
+    <inceptionYear>2004</inceptionYear>
+
+    <dependencies>
+        <dependency>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>1.5.1</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>asm</groupId>
+            <artifactId>asm-attrs</artifactId>
+            <version>1.5.1</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>asm</groupId>
+            <artifactId>asm-util</artifactId>
+            <version>1.5.1</version>
+            <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <sourceDirectory>src/main</sourceDirectory>
+        
+        <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+        
+        <unitTest>
+            <includes>
+                <include>**/*Test.java</include>
+            </includes>
+        </unitTest>
+    </build>
+    
+</project>
+

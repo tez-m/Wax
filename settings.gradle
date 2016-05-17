@@ -1,1 +1,1 @@
-include ':app', ':wax', ':asm1'
+include ':example', ':wax'

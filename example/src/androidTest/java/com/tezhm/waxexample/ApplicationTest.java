@@ -1,4 +1,4 @@
-package com.example.tez_desktop.waxexample;
+package com.tezhm.waxexample;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

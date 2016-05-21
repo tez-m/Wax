@@ -42,13 +42,17 @@ public class InjectProcessor extends AbstractProcessor
         {
             try
             {
-                String enclosingClassName = getEnclosingClassName(field);
+                String enclosingClassName = getEnclosingClassName(field).replace('.', '/');
                 String fieldName = getFieldName(field);
-                String fieldTypeName = getFieldTypeName(field);
+                String fieldTypeName = getFieldTypeName(field).replace('.', '/');
                 // TODO: Potential file name length issue
-                String factoryName = fieldTypeName.replace('.', '_') + "Factory";
+                String factoryName = fieldTypeName.replace('/', '_') + "Factory";
 
-                writer.appendField(enclosingClassName, fieldName, fieldTypeName, factoryName);
+                writer.appendField(
+                        enclosingClassName,
+                        fieldName,
+                        fieldTypeName,
+                        "com/tezhm/generated/factory/" + factoryName);
                 writer.flush(processingEnv.getFiler());
 
                 generateFactory(field, factoryName);
@@ -100,7 +104,7 @@ public class InjectProcessor extends AbstractProcessor
                 .addMethod(make)
                 .build();
 
-        JavaFile javaFile = JavaFile.builder("com.tez.generated.factory", factory)
+        JavaFile javaFile = JavaFile.builder("com.tezhm.generated.factory", factory)
                 .build();
 
         javaFile.writeTo(processingEnv.getFiler());

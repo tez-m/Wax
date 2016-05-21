@@ -55,19 +55,17 @@ public class XmlWriter
             mainRootElement.setAttribute("name", entry.getKey());
             doc.appendChild(mainRootElement);
 
+            // Throws in a bunch of possibly unordered name + type + factory elements. They need to
+            // be in a shared element rather than scattered at the same level
+            //
+            // Might even overwrite each other since they aren't getting unique element names
             for (FieldTuple fieldTuple : entry.getValue())
             {
-                Element name = doc.createElement("name");
-                name.setAttribute("value", fieldTuple.fieldName);
-                mainRootElement.appendChild(name);
-
-                Element type = doc.createElement("type");
-                type.setAttribute("value", fieldTuple.fieldType);
-                mainRootElement.appendChild(type);
-
-                Element factory = doc.createElement("factory");
-                factory.setAttribute("value", fieldTuple.factoryName);
-                mainRootElement.appendChild(factory);
+                Element field = doc.createElement("field");
+                field.setAttribute("name", fieldTuple.fieldName);
+                field.setAttribute("type", fieldTuple.fieldType);
+                field.setAttribute("factory", fieldTuple.factoryName);
+                mainRootElement.appendChild(field);
             }
         }
 

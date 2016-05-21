@@ -2,11 +2,16 @@ package com.tezhm.wax.internal;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,93 +22,74 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class XmlReader
 {
-    public void parse(String xml)
+    private Map<String, List<FieldTuple>> classMap = new HashMap<>();
+
+    public void parse(File input) throws Exception
     {
-        ArrayList<String> rolev = new ArrayList<String>();
-        Document dom;
-        // Make an  instance of the DocumentBuilderFactory
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try
         {
-            // use the factory to take an instance of the document builder
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            // parse using the builder to get the DOM mapping of the
-            // XML file
-            dom = db.parse(xml);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(input);
+            doc.getDocumentElement().normalize();
 
-            Element doc = dom.getDocumentElement();
 
-            String role1 = getTextValue(role1, doc, "role1");
-            if (role1 != null)
-            {
-                if (!role1.isEmpty())
-                {
-                    rolev.add(role1);
-                }
-            }
-            String role2 = getTextValue(role2, doc, "role2");
-            if (role2 != null)
-            {
-                if (!role2.isEmpty())
-                {
-                    rolev.add(role2);
-                }
-            }
-            String role3 = getTextValue(role3, doc, "role3");
-            if (role3 != null)
-            {
-                if (!role3.isEmpty())
-                {
-                    rolev.add(role3);
-                }
-            }
-            String role4 = getTextValue(role4, doc, "role4");
-            if (role4 != null)
-            {
-                if (!role4.isEmpty())
-                {
-                    rolev.add(role4);
-                }
-            }
-            return true;
+            NodeList classList = doc.getElementsByTagName("class");
 
+            for (int i = 0; i < classList.getLength(); ++i)
+            {
+                Node nNode = classList.item(i);
+
+                if (nNode.getNodeType() != Node.ELEMENT_NODE)
+                {
+                    throw new IllegalArgumentException();
+                }
+
+                Element classElement = (Element) nNode;
+                String className = classElement.getAttribute("name");
+                // TODO: check if class exists before adding
+                classMap.put(className, new ArrayList<FieldTuple>());
+
+                Node nameNode = classElement.getElementsByTagName("name").item(0);
+                Node typeNode = classElement.getElementsByTagName("type").item(0);
+                Node factoryNode = classElement.getElementsByTagName("factory").item(0);
+
+                if (nameNode.getNodeType() != Node.ELEMENT_NODE)
+                {
+                    throw new IllegalArgumentException();
+                }
+
+                if (typeNode.getNodeType() != Node.ELEMENT_NODE)
+                {
+                    throw new IllegalArgumentException();
+                }
+
+                if (factoryNode.getNodeType() != Node.ELEMENT_NODE)
+                {
+                    throw new IllegalArgumentException();
+                }
+
+                Element nameElement = (Element) nameNode;
+                Element typeElement = (Element) typeNode;
+                Element factoryElement = (Element) factoryNode;
+
+                String fieldName = nameElement.getAttribute("value");
+                String typeName = typeElement.getAttribute("value");
+                String factoryName = factoryElement.getAttribute("value");
+                FieldTuple field = new FieldTuple(fieldName, typeName, factoryName);
+
+                classMap.get(className).add(field);
+            }
         }
-        catch (ParserConfigurationException pce)
+        catch (Exception e)
         {
-            System.out.println(pce.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        catch (SAXException se)
-        {
-            System.out.println(se.getMessage());
-        }
-        catch (IOException ioe)
-        {
-            System.err.println(ioe.getMessage());
-        }
-
-        return false;
     }
 
-
-    public String getNextClass()
+    public Map<String, List<FieldTuple>> getClassMap()
     {
-
-    }
-
-    public FieldTuple getNextField()
-    {
-
-    }
-
-    private String getTextValue(Element doc, String tag)
-    {
-        String value = def;
-        NodeList nl;
-        nl = doc.getElementsByTagName(tag);
-        if (nl.getLength() > 0 && nl.item(0).hasChildNodes())
-        {
-            value = nl.item(0).getFirstChild().getNodeValue();
-        }
-        return value;
+        return this.classMap;
     }
 }

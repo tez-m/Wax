@@ -3,7 +3,6 @@ package com.tezhm.waxexample;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import com.example.tez_desktop.waxexample.R;
 import com.tezhm.wax.annotation.Inject;
 
 public class MainActivity extends AppCompatActivity

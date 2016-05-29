@@ -25,20 +25,20 @@ import javax.xml.transform.stream.StreamResult;
  */
 public class XmlWriter
 {
-    private Map<String, List<FieldTuple>> classMap = new HashMap<>();
+    private Map<String, List<InjectionField>> classMap = new HashMap<>();
 
     public void appendClass(String className)
     {
         if (!classMap.containsKey(className))
         {
-            classMap.put(className, new ArrayList<FieldTuple>());
+            classMap.put(className, new ArrayList<InjectionField>());
         }
     }
 
     public void appendField(String className, String fieldName, String fieldType, String factoryName)
     {
         appendClass(className);
-        classMap.get(className).add(new FieldTuple(fieldName, fieldType, factoryName));
+        classMap.get(className).add(new InjectionField(fieldName, fieldType, factoryName));
     }
 
     public void flush(Filer filer) throws Exception
@@ -49,23 +49,26 @@ public class XmlWriter
         icBuilder = icFactory.newDocumentBuilder();
         Document doc = icBuilder.newDocument();
 
-        for (Map.Entry<String, List<FieldTuple>> entry : classMap.entrySet())
+        Element mainRootElement = doc.createElement("InjectionMap");
+        doc.appendChild(mainRootElement);
+
+        for (Map.Entry<String, List<InjectionField>> entry : classMap.entrySet())
         {
-            Element mainRootElement = doc.createElement("class");
-            mainRootElement.setAttribute("name", entry.getKey());
-            doc.appendChild(mainRootElement);
+            Element classElement = doc.createElement("Class");
+            classElement.setAttribute("name", entry.getKey());
+            mainRootElement.appendChild(classElement);
 
             // Throws in a bunch of possibly unordered name + type + factory elements. They need to
             // be in a shared element rather than scattered at the same level
             //
             // Might even overwrite each other since they aren't getting unique element names
-            for (FieldTuple fieldTuple : entry.getValue())
+            for (InjectionField injectionField : entry.getValue())
             {
-                Element field = doc.createElement("field");
-                field.setAttribute("name", fieldTuple.fieldName);
-                field.setAttribute("type", fieldTuple.fieldType);
-                field.setAttribute("factory", fieldTuple.factoryName);
-                mainRootElement.appendChild(field);
+                Element field = doc.createElement("Field");
+                field.setAttribute("name", injectionField.name);
+                field.setAttribute("type", injectionField.type);
+                field.setAttribute("factory", injectionField.factory);
+                classElement.appendChild(field);
             }
         }
 
@@ -79,10 +82,10 @@ public class XmlWriter
                 "",
                 "output123.xml",
                 (javax.lang.model.element.Element)null);
+
         try
         {
             Writer writer = filerResourceFile.openWriter();
-
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             DOMSource source = new DOMSource(doc);

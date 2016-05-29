@@ -1,6 +1,6 @@
 package com.tezhm.wax;
 
-import com.tezhm.wax.internal.FieldTuple;
+import com.tezhm.wax.internal.InjectionField;
 import com.tezhm.wax.internal.XmlReader;
 
 import org.objectweb.asm.ClassReader;
@@ -8,21 +8,18 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.xml.sax.XMLReader;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
 class MethodFactoryInjector extends MethodVisitor
 {
     private final String cls;
-    private final List<FieldTuple> fields;
+    private final List<InjectionField> fields;
 
     /**
      *
@@ -31,7 +28,7 @@ class MethodFactoryInjector extends MethodVisitor
      * @param cls    "com/example/tez_desktop/myapplication/Injectable"
      * @param fields
      */
-    public MethodFactoryInjector(int api, MethodVisitor mv, String cls, List<FieldTuple> fields)
+    public MethodFactoryInjector(int api, MethodVisitor mv, String cls, List<InjectionField> fields)
     {
         super(api, mv);
         this.cls = cls;
@@ -45,20 +42,20 @@ class MethodFactoryInjector extends MethodVisitor
     {
         super.visitCode();
 
-        for (FieldTuple field : this.fields)
+        for (InjectionField field : this.fields)
         {
             super.visitVarInsn(Opcodes.ALOAD, 0);
             super.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
-                    field.factoryName,              // Class containing static method
-                    "make",                         // Method to statically call
-                    "()L" + field.fieldType + ";",  // Type returned by factory
-                    false);                         // If it's an interface
+                    field.factory,              // Class containing static method
+                    "make",                     // Method to statically call
+                    "()L" + field.type + ";",   // Type returned by factory
+                    false);                     // If it's an interface
             super.visitFieldInsn(
                     Opcodes.PUTFIELD,
-                    this.cls,                       // Parent class which holds field
-                    field.fieldName,                // Field name which will hold injected value
-                    "L" + field.fieldType + ";");   // Type to inject
+                    this.cls,                  // Parent class which holds field
+                    field.name,                // Field name which will hold injected value
+                    "L" + field.type + ";");   // Type to inject
         }
     }
 }
@@ -69,9 +66,9 @@ class ClassFactoryInjector extends ClassVisitor
 {
     private final int api;
     private final String cls;
-    private final List<FieldTuple> fields;
+    private final List<InjectionField> fields;
 
-    public ClassFactoryInjector(int api, ClassWriter cv, String cls, List<FieldTuple> fields)
+    public ClassFactoryInjector(int api, ClassWriter cv, String cls, List<InjectionField> fields)
     {
         super(api, cv);
         this.api = api;
@@ -116,7 +113,9 @@ public class Wax
             XmlReader reader = new XmlReader();
             reader.parse(input);
 
-            for (Map.Entry<String, List<FieldTuple>> a : reader.getClassMap().entrySet())
+            // TODO: check if class has already been modified
+            // Some files may not be re-compiled and will get injected multiple times
+            for (Map.Entry<String, List<InjectionField>> a : reader.getClassMap().entrySet())
             {
                 String className = a.getKey();
                 String classPath = "/" + className + ".class";
@@ -125,7 +124,7 @@ public class Wax
                 ClassReader classReader = new ClassReader(in);
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
-                //Wrap the ClassWriter with our custom ClassVisitor
+                // Wrap the ClassWriter with our custom ClassVisitor
                 ClassFactoryInjector mcw = new ClassFactoryInjector(
                         Opcodes.ASM4,
                         cw,
@@ -133,7 +132,7 @@ public class Wax
                         a.getValue());
                 classReader.accept(mcw, 0);
 
-                //Write the output to a class file
+                // Write the output to a class file
                 File outputClass = new File(args[0] + classPath);
                 DataOutputStream dout = new DataOutputStream(new FileOutputStream(outputClass));
                 dout.write(cw.toByteArray());

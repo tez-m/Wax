@@ -4,10 +4,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +13,13 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Created by Tez-Desktop on 5/17/2016.
  */
 public class XmlReader
 {
-    private Map<String, List<FieldTuple>> classMap = new HashMap<>();
+    private Map<String, List<InjectionField>> classMap = new HashMap<>();
 
     public void parse(File input) throws Exception
     {
@@ -34,51 +31,41 @@ public class XmlReader
             doc.getDocumentElement().normalize();
 
 
-            NodeList classList = doc.getElementsByTagName("class");
+            NodeList classList = doc.getElementsByTagName("Class");
 
             for (int i = 0; i < classList.getLength(); ++i)
             {
-                Node nNode = classList.item(i);
+                Node classNode = classList.item(i);
 
-                if (nNode.getNodeType() != Node.ELEMENT_NODE)
+                if (classNode.getNodeType() != Node.ELEMENT_NODE)
                 {
                     throw new IllegalArgumentException();
                 }
 
-                Element classElement = (Element) nNode;
+                Element classElement = (Element) classNode;
                 String className = classElement.getAttribute("name");
                 // TODO: check if class exists before adding
-                classMap.put(className, new ArrayList<FieldTuple>());
+                classMap.put(className, new ArrayList<InjectionField>());
 
-                Node nameNode = classElement.getElementsByTagName("name").item(0);
-                Node typeNode = classElement.getElementsByTagName("type").item(0);
-                Node factoryNode = classElement.getElementsByTagName("factory").item(0);
+                NodeList fieldList = classElement.getElementsByTagName("Field");
 
-                if (nameNode.getNodeType() != Node.ELEMENT_NODE)
+                for (int j = 0; j < fieldList.getLength(); ++j)
                 {
-                    throw new IllegalArgumentException();
+                    Node fieldNode = fieldList.item(j);
+
+                    if (fieldNode.getNodeType() != Node.ELEMENT_NODE)
+                    {
+                        throw new IllegalArgumentException();
+                    }
+
+                    Element fieldElement = (Element) fieldNode;
+                    String fieldName = fieldElement.getAttribute("name");
+                    String typeName = fieldElement.getAttribute("type");
+                    String factoryName = fieldElement.getAttribute("factory");
+
+                    InjectionField field = new InjectionField(fieldName, typeName, factoryName);
+                    classMap.get(className).add(field);
                 }
-
-                if (typeNode.getNodeType() != Node.ELEMENT_NODE)
-                {
-                    throw new IllegalArgumentException();
-                }
-
-                if (factoryNode.getNodeType() != Node.ELEMENT_NODE)
-                {
-                    throw new IllegalArgumentException();
-                }
-
-                Element nameElement = (Element) nameNode;
-                Element typeElement = (Element) typeNode;
-                Element factoryElement = (Element) factoryNode;
-
-                String fieldName = nameElement.getAttribute("value");
-                String typeName = typeElement.getAttribute("value");
-                String factoryName = factoryElement.getAttribute("value");
-                FieldTuple field = new FieldTuple(fieldName, typeName, factoryName);
-
-                classMap.get(className).add(field);
             }
         }
         catch (Exception e)
@@ -88,7 +75,7 @@ public class XmlReader
         }
     }
 
-    public Map<String, List<FieldTuple>> getClassMap()
+    public Map<String, List<InjectionField>> getClassMap()
     {
         return this.classMap;
     }

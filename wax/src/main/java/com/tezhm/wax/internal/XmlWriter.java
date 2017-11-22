@@ -1,5 +1,7 @@
 package com.tezhm.wax.internal;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -77,11 +79,18 @@ public class XmlWriter
 
     private void writeToFiler(Filer filer, Document doc) throws Exception
     {
+        writeXml(filer, doc);
+//        writeJson(filer);
+    }
+
+    private void writeXml(Filer filer, Document doc) throws Exception
+    {
         FileObject filerResourceFile = filer.createResource(
                 StandardLocation.SOURCE_OUTPUT,
-                "",
-                "output123.xml",
-                (javax.lang.model.element.Element)null);
+                "com.tezhm.wax.generated.res",
+                "injectionmap.xml",
+                (javax.lang.model.element.Element)null
+        );
 
         try
         {
@@ -97,14 +106,64 @@ public class XmlWriter
         }
         catch (Exception e)
         {
-            try
-            {
-                filerResourceFile.delete();
-            }
-            catch (Exception ignored)
-            {
-            }
+            cleanup(filerResourceFile);
             throw e;
         }
+    }
+
+    private void writeJson(Filer filer) throws Exception
+    {
+        JSONObject root = new JSONObject();
+        JSONArray injectionMap = new JSONArray();
+
+        for (Map.Entry<String, List<InjectionField>> entry : classMap.entrySet())
+        {
+            JSONArray fields = new JSONArray();
+
+            for (InjectionField injectionField : entry.getValue())
+            {
+                JSONObject field = new JSONObject();
+                field.put("name", injectionField.name);
+                field.put("type", injectionField.type);
+                field.put("factory", injectionField.factory);
+                fields.add(field);
+            }
+
+            JSONObject injection = new JSONObject();
+            injection.put("class", entry.getKey());
+            injection.put("fields", fields);
+            injectionMap.add(injection);
+        }
+
+        root.put("InjectionMap", injectionMap);
+
+        FileObject filerResourceFile = filer.createResource(
+                StandardLocation.SOURCE_OUTPUT,
+                "com.tezhm.wax.generated.res",
+                "injectionmap.json",
+                (javax.lang.model.element.Element)null
+        );
+
+        try
+        {
+            Writer writer = filerResourceFile.openWriter();
+            writer.write(root.toJSONString());
+            writer.flush();
+            writer.close();
+        }
+        catch (Exception e)
+        {
+            cleanup(filerResourceFile);
+            throw e;
+        }
+    }
+
+    private void cleanup(FileObject filerResourceFile)
+    {
+        try
+        {
+            filerResourceFile.delete();
+        }
+        catch (Exception ignored) { }
     }
 }

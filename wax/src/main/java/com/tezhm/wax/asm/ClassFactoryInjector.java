@@ -1,22 +1,18 @@
 package com.tezhm.wax.asm;
 
-import com.tezhm.wax.internal.InjectionField;
-
+import org.json.simple.JSONArray;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.List;
-
-//Our class modifier class visitor. It delegate all calls to the super class
-//Only makes sure that it returns our MethodVisitor for every method
+// Overrides MethodVisitor with ours
 public class ClassFactoryInjector extends ClassVisitor
 {
     private final int api;
     private final String cls;
-    private final List<InjectionField> fields;
+    private final JSONArray fields;
 
-    public ClassFactoryInjector(int api, ClassWriter cv, String cls, List<InjectionField> fields)
+    public ClassFactoryInjector(int api, ClassWriter cv, String cls, JSONArray fields)
     {
         super(api, cv);
         this.api = api;
@@ -40,7 +36,8 @@ public class ClassFactoryInjector extends ClassVisitor
                     this.api,
                     mv,
                     this.cls,
-                    this.fields);
+                    this.fields
+            );
             return mvw;
         }
 

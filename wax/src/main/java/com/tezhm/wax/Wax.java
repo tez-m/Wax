@@ -1,9 +1,10 @@
 package com.tezhm.wax;
 
 import com.tezhm.wax.asm.ClassFactoryInjector;
-import com.tezhm.wax.internal.InjectionField;
-import com.tezhm.wax.internal.XmlReader;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -11,10 +12,8 @@ import org.objectweb.asm.Opcodes;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -26,23 +25,20 @@ public class Wax
         try
         {
             String outputDir = args[0];
-            String aptDir = args[1] + "/generated/source/apt/debug/com/tezhm/wax/generated/res/injectionmap.xml";
+            String aptDir = args[1] + "/generated/source/apt/debug/com/tezhm/wax/generated/res/injectionmap.json";
 
-            File input = new File(aptDir);
-            XmlReader reader = new XmlReader();
-
-//            if (args.length > 1)
-//            {
-//                throw new RuntimeException(Arrays.toString(args));
-//            }
-
-            reader.parse(input);
+            FileReader input = new FileReader(aptDir);
+            JSONParser parser = new JSONParser();
+            JSONObject resource = (JSONObject) parser.parse(input);
+            JSONArray injectionMap = (JSONArray) resource.get("injection_map");
 
             // TODO: check if class has already been modified
             // TODO: Some files may not be re-compiled and will get injected multiple times
-            for (Map.Entry<String, List<InjectionField>> a : reader.getClassMap().entrySet())
+            for (Object entry : injectionMap)
             {
-                String className = a.getKey();
+                JSONObject injection = (JSONObject) entry;
+
+                String className = (String) injection.get("class");
                 String classPath = "/" + className + ".class";
 
                 InputStream in = Wax.class.getResourceAsStream(classPath);
@@ -54,7 +50,8 @@ public class Wax
                         Opcodes.ASM4,
                         cw,
                         className,
-                        a.getValue());
+                        (JSONArray) injection.get("fields")
+                );
                 classReader.accept(mcw, 0);
 
                 // Write the output to a class file

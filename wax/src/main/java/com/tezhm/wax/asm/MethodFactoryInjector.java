@@ -1,16 +1,14 @@
 package com.tezhm.wax.asm;
 
-import com.tezhm.wax.internal.InjectionField;
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-
-import java.util.List;
 
 class MethodFactoryInjector extends MethodVisitor
 {
     private final String cls;
-    private final List<InjectionField> fields;
+    private final JSONArray fields;
 
     /**
      *
@@ -19,7 +17,7 @@ class MethodFactoryInjector extends MethodVisitor
      * @param cls    "com/example/tez_desktop/myapplication/Injectable"
      * @param fields
      */
-    public MethodFactoryInjector(int api, MethodVisitor mv, String cls, List<InjectionField> fields)
+    public MethodFactoryInjector(int api, MethodVisitor mv, String cls, JSONArray fields)
     {
         super(api, mv);
         this.cls = cls;
@@ -33,20 +31,24 @@ class MethodFactoryInjector extends MethodVisitor
     {
         super.visitCode();
 
-        for (InjectionField field : this.fields)
+        for (Object entry : this.fields)
         {
+            JSONObject field = (JSONObject) entry;
+
             super.visitVarInsn(Opcodes.ALOAD, 0);
             super.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
-                    field.factory,              // Class containing static method
-                    "make",                     // Method to statically call
-                    "()L" + field.type + ";",   // Type returned by factory
-                    false);                     // If it's an interface
+                    (String) field.get("factory"),      // Class containing static method
+                    "make",                             // Method to statically call
+                    "()L" + field.get("type") + ";",    // Type returned by factory
+                    false                               // If it's an interface
+            );
             super.visitFieldInsn(
                     Opcodes.PUTFIELD,
-                    this.cls,                  // Parent class which holds field
-                    field.name,                // Field name which will hold injected value
-                    "L" + field.type + ";");   // Type to inject
+                    this.cls,                       // Parent class which holds field
+                    (String) field.get("name"),     // Field name which will hold injected value
+                    "L" + field.get("type") + ";"   // Type to inject
+            );
         }
     }
 }

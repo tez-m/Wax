@@ -1,11 +1,16 @@
 package com.tezhm.wax.internal;
 
+import org.json.simple.JSONObject;
+
+import java.io.Writer;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 
 /**
  *
@@ -13,7 +18,7 @@ import javax.lang.model.type.TypeMirror;
 public class FieldInjectionGenerator
 {
     private final String packagePrefix;
-    private final XmlWriter writer;
+    private final InjectionMap injectionMap;
 
     /**
      *
@@ -22,7 +27,7 @@ public class FieldInjectionGenerator
     public FieldInjectionGenerator(String packagePrefix)
     {
         this.packagePrefix = packagePrefix;
-        this.writer = new XmlWriter();
+        this.injectionMap = new InjectionMap();
     }
 
     public void process(ClassFieldMap classFieldMap)
@@ -39,17 +44,47 @@ public class FieldInjectionGenerator
                 String fieldTypeName = fieldType.toString().replace('.', '/');
                 String factoryName = fieldTypeName + "Factory";
 
-                writer.appendField(
+                this.injectionMap.appendField(
                         enclosingClassName,
                         fieldName,
                         fieldTypeName,
-                        "com/tezhm/wax/generated/" + factoryName);
+                        this.packagePrefix + factoryName
+                );
             }
         }
     }
 
     public void flush(Filer filer) throws Exception
     {
-        writer.flush(filer);
+        JSONObject injectionMap = this.injectionMap.toJson();
+
+        FileObject resource = filer.createResource(
+                StandardLocation.SOURCE_OUTPUT,
+                "com.tezhm.wax.generated.res",
+                "injectionmap.json",
+                (javax.lang.model.element.Element)null
+        );
+
+        try
+        {
+            Writer writer = resource.openWriter();
+            writer.write(injectionMap.toJSONString());
+            writer.flush();
+            writer.close();
+        }
+        catch (Exception e)
+        {
+            cleanup(resource);
+            throw e;
+        }
+    }
+
+    private void cleanup(FileObject resource)
+    {
+        try
+        {
+            resource.delete();
+        }
+        catch (Exception ignored) { }
     }
 }

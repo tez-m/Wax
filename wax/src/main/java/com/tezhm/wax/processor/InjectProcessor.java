@@ -63,23 +63,6 @@ public class InjectProcessor extends AbstractProcessor
         {
             try
             {
-//                String enclosingClassName = getEnclosingClassName(field).replace('.', '/');
-//                String fieldName = getFieldName(field);
-//                String fieldTypeName = getFieldTypeName(field).replace('.', '/');
-//                // TODO: Potential file name length issue
-//                String factoryName = fieldTypeName.replace('/', '_') + "Factory";
-
-//                writer.appendField(
-//                        enclosingClassName,
-//                        fieldName,
-//                        fieldTypeName,
-//                        "com/tezhm/wax/generated/" + factoryName);
-//
-//                generateFactory(field, factoryName);
-
-
-
-
                 Element parentClass = field.getEnclosingElement();
                 TypeMirror classType = parentClass.asType();
                 TypeMirror fieldType = field.asType();
@@ -96,8 +79,6 @@ public class InjectProcessor extends AbstractProcessor
         {
             try
             {
-                // writer.flush(processingEnv.getFiler());
-
                 this.factoryGenerator.process(this.factorySet);
                 this.fieldInjectionGenerator.process(this.classFieldMap);
                 this.factoryGenerator.flush(processingEnv.getFiler());
@@ -126,23 +107,5 @@ public class InjectProcessor extends AbstractProcessor
             }
             catch (Exception ignored) { }
         }
-    }
-
-    private String getEnclosingClassName(Element field)
-    {
-        Element parentClass = field.getEnclosingElement();
-        TypeMirror classType = parentClass.asType();
-        return classType.toString();
-    }
-
-    private String getFieldName(Element field)
-    {
-        return field.toString();
-    }
-
-    private String getFieldTypeName(Element field)
-    {
-        TypeMirror fieldType = field.asType();
-        return fieldType.toString();
     }
 }

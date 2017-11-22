@@ -62,7 +62,7 @@ public class FieldInjectionGenerator
                 StandardLocation.SOURCE_OUTPUT,
                 "com.tezhm.wax.generated.res",
                 "injectionmap.json",
-                (javax.lang.model.element.Element)null
+                (Element)null
         );
 
         try

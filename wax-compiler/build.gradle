@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 
 dependencies {
-    compile 'org.ow2.asm:asm:5.1'
-    compile 'org.ow2.asm:asm-commons:5.1'
+    compile project(path: ':wax')
+    compile 'com.squareup:javapoet:1.7.0'
     compile 'com.googlecode.json-simple:json-simple:1.1'
 }

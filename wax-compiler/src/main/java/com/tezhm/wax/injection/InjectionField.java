@@ -1,4 +1,4 @@
-package com.tezhm.wax.internal;
+package com.tezhm.wax.injection;
 
 /**
  * POJO for injection parameters of a classes field.

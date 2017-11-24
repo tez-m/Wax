@@ -9,6 +9,7 @@ public class MainActivity extends AppCompatActivity
 {
     @Inject TestInject injectable1;
     @Inject OtherInject injectable2;
+    @Inject ExampleInterface injectableInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -18,5 +19,6 @@ public class MainActivity extends AppCompatActivity
 
         System.out.println("**************** " + injectable1 + " *******************");
         System.out.println("**************** " + injectable2 + " *******************");
+        System.out.println(injectableInterface.hello());
     }
 }

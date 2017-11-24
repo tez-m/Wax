@@ -1,4 +1,4 @@
-package com.tezhm.wax.internal;
+package com.tezhm.wax.injection;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -29,6 +29,7 @@ public class InjectionMap
         classMap.get(className).add(new InjectionField(fieldName, fieldType, factoryName));
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJson()
     {
         JSONObject root = new JSONObject();

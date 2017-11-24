@@ -1,4 +1,4 @@
-package com.tezhm.wax.internal;
+package com.tezhm.wax.injection;
 
 import org.json.simple.JSONObject;
 
@@ -15,7 +15,7 @@ import javax.tools.StandardLocation;
 /**
  *
  */
-public class FieldInjectionGenerator
+public class InjectionGenerator
 {
     private final String packagePrefix;
     private final InjectionMap injectionMap;
@@ -24,15 +24,15 @@ public class FieldInjectionGenerator
      *
      * @param packagePrefix
      */
-    public FieldInjectionGenerator(String packagePrefix)
+    public InjectionGenerator(String packagePrefix)
     {
         this.packagePrefix = packagePrefix;
         this.injectionMap = new InjectionMap();
     }
 
-    public void process(ClassFieldMap classFieldMap)
+    public void process(InjectionContainer injections)
     {
-        for (Map.Entry<TypeMirror, Set<Element>> classFieldEntry : classFieldMap.entrySet())
+        for (Map.Entry<TypeMirror, Set<Element>> classFieldEntry : injections.fields.entrySet())
         {
             TypeMirror cls = classFieldEntry.getKey();
             String enclosingClassName = cls.toString().replace('.', '/');
@@ -61,7 +61,7 @@ public class FieldInjectionGenerator
         FileObject resource = filer.createResource(
                 StandardLocation.SOURCE_OUTPUT,
                 "com.tezhm.wax.generated.res",
-                "injectionmap.json",
+                "injection_map.json",
                 (Element)null
         );
 

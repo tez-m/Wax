@@ -25,9 +25,9 @@ public class Wax
         try
         {
             String outputDir = args[0];
-            String aptDir = args[1] + "/generated/source/apt/debug/com/tezhm/wax/generated/res/injectionmap.json";
+            String mapPath = args[1] + "/generated/source/apt/debug/com/tezhm/wax/generated/res/injection_map.json";
 
-            FileReader input = new FileReader(aptDir);
+            FileReader input = new FileReader(mapPath);
             JSONParser parser = new JSONParser();
             JSONObject resource = (JSONObject) parser.parse(input);
             JSONArray injectionMap = (JSONArray) resource.get("injection_map");

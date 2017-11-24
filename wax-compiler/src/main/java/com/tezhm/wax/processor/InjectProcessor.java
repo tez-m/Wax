@@ -1,10 +1,11 @@
 package com.tezhm.wax.processor;
 
 import com.tezhm.wax.annotation.Inject;
-import com.tezhm.wax.internal.ClassFieldMap;
-import com.tezhm.wax.internal.FactoryGenerator;
-import com.tezhm.wax.internal.FactorySet;
-import com.tezhm.wax.internal.FieldInjectionGenerator;
+import com.tezhm.wax.annotation.Provides;
+import com.tezhm.wax.factory.FactoryContainer;
+import com.tezhm.wax.factory.FactoryGenerator;
+import com.tezhm.wax.injection.InjectionContainer;
+import com.tezhm.wax.injection.InjectionGenerator;
 
 import java.util.Set;
 
@@ -14,83 +15,117 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 
-@SupportedAnnotationTypes("com.tezhm.wax.annotation.Inject")
+@SupportedAnnotationTypes({"com.tezhm.wax.annotation.Inject", "com.tezhm.wax.annotation.Provides"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class InjectProcessor extends AbstractProcessor
 {
     private static final String generatedFactoryDirectory = "com/tezhm/wax/generated/";
 
-    private final FactorySet factorySet;
-    private final ClassFieldMap classFieldMap;
+    private final FactoryContainer factories;
     private final FactoryGenerator factoryGenerator;
-    private final FieldInjectionGenerator fieldInjectionGenerator;
+    private final InjectionContainer injections;
+    private final InjectionGenerator injectionGenerator;
 
     public InjectProcessor()
     {
         this(
-                new FactorySet(),
-                new ClassFieldMap(),
-                new FactoryGenerator(generatedFactoryDirectory),
-                new FieldInjectionGenerator(generatedFactoryDirectory)
+            new FactoryContainer(),
+            new InjectionContainer(),
+            new FactoryGenerator(generatedFactoryDirectory),
+            new InjectionGenerator(generatedFactoryDirectory)
         );
     }
 
     public InjectProcessor(
-            FactorySet factorySet,
-            ClassFieldMap classFieldMap,
+            FactoryContainer factories,
+            InjectionContainer injections,
             FactoryGenerator factoryGenerator,
-            FieldInjectionGenerator fieldInjectionGenerator)
+            InjectionGenerator injectionGenerator)
     {
-        this.factorySet = factorySet;
-        this.classFieldMap = classFieldMap;
+        this.factories = factories;
+        this.injections = injections;
         this.factoryGenerator = factoryGenerator;
-        this.fieldInjectionGenerator = fieldInjectionGenerator;
+        this.injectionGenerator = injectionGenerator;
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
+    {
+        try
+        {
+            this.processFields(roundEnv);
+            this.processProviders(roundEnv);
+
+            if (roundEnv.processingOver())
+            {
+                this.factoryGenerator.process(this.factories);
+                this.factoryGenerator.flush(processingEnv.getFiler());
+
+                this.injectionGenerator.process(this.injections);
+                this.injectionGenerator.flush(processingEnv.getFiler());
+            }
+        }
+        catch (Exception e)
+        {
+            printErrorMessage(e);
+        }
+
+        return true;
+    }
+
+    private void processFields(RoundEnvironment roundEnv) throws Exception
     {
         Set<VariableElement> fields =
                 ElementFilter.fieldsIn(roundEnv.getElementsAnnotatedWith(Inject.class));
 
         for (VariableElement field : fields)
         {
-            try
+            Element parentClass = field.getEnclosingElement();
+            TypeMirror classType = parentClass.asType();
+
+            switch (field.getKind())
             {
-                Element parentClass = field.getEnclosingElement();
-                TypeMirror classType = parentClass.asType();
-                TypeMirror fieldType = field.asType();
-                this.classFieldMap.registerField(classType, field);
-                this.factorySet.register(fieldType);
+                case FIELD:
+                    this.injections.registerField(classType, field);
+                    break;
+                case LOCAL_VARIABLE:
+                    this.injections.registerVariable(classType, field);
+                    break;
+                default:
+                    // TODO: more information in exception (line number, variable name?)
+                    throw new Exception("Unsupported Inject field");
             }
-            catch (Exception e)
+
+            switch (field.asType().getKind())
             {
-                printErrorMessage(e);
+                case DECLARED:
+                    this.factories.registerFactory(field);
+                    break;
+                default:
+                    // TODO: more information in exception (line number, variable name?)
+                    throw new Exception("Unsupported Inject type");
             }
         }
+    }
 
-        if (roundEnv.processingOver())
+    private void processProviders(RoundEnvironment roundEnv) throws Exception
+    {
+        Set<ExecutableElement> providers =
+                ElementFilter.methodsIn(roundEnv.getElementsAnnotatedWith(Provides.class));
+
+        for (ExecutableElement provider : providers)
         {
-            try
-            {
-                this.factoryGenerator.process(this.factorySet);
-                this.fieldInjectionGenerator.process(this.classFieldMap);
-                this.factoryGenerator.flush(processingEnv.getFiler());
-                this.fieldInjectionGenerator.flush(processingEnv.getFiler());
-            }
-            catch (Exception e)
-            {
-                printErrorMessage(e);
-            }
+            this.factories.registerProvider(provider);
         }
-
-        return true;
     }
 
     private void printErrorMessage(Exception e)

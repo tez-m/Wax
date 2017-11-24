@@ -1,14 +1,40 @@
 package com.tezhm.wax.internal;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class FactoryGeneratorTest
 {
-    private static final String prefix = "";
+    private FactoryGenerator testClass;
+
+    @Before
+    public void init()
+    {
+        this.testClass = new FactoryGenerator("");
+    }
 
     @Test
-    public void process()
+    public void createFactoryInstantiateNoArgs() throws Exception
     {
-        FactoryGenerator testClass = new FactoryGenerator(prefix);
+        NoArgs test = new NoArgs();
+
     }
+
+    @Test
+    public void createFactoryInstantiateWithArgs() throws Exception
+    {
+
+    }
+
+    @Test
+    public void createFactoryCallsProvider() throws Exception
+    {
+
+    }
+
+
+}
+
+class NoArgs
+{
 }

@@ -4,7 +4,13 @@
 
 A fast and easy to use dependency injection framework for Android and Java.
 
+## Installation
+
+[TODO: plugin]
+
 ## Usage
+
+### Fields
 
 Add `@Inject` annotations to the fields you wish to inject.
 
@@ -18,7 +24,15 @@ public class YourClass
 }
 ```
 
-## Providers
+### Variables
+
+[TODO]
+
+### Config
+
+[TODO]
+
+### Providers
 
 Interfaces can be injected by creating `@Provides` methods.
 

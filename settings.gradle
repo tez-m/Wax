@@ -1,1 +1,1 @@
-include ':example', ':wax', ':wax-compiler'
+include ':example', ':wax', ':wax-compiler', ':wax-plugin'

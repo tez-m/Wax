@@ -5,7 +5,7 @@ android {
     buildToolsVersion "26.0.2"
 
     defaultConfig {
-        applicationId "com.tezhm.waxexample"
+        applicationId "com.tezm.waxexample"
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 1
@@ -39,7 +39,7 @@ afterEvaluate {
             javaexec {
                 classpath += variant.javaCompiler.classpath
                 classpath += files(variant.javaCompiler.destinationDir)
-                main = 'com.tezhm.wax.Wax'
+                main = 'com.tezm.wax.Wax'
                 args variant.javaCompiler.destinationDir, buildDir
             }
         }
